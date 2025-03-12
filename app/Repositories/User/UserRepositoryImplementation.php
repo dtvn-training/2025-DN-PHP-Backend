@@ -41,12 +41,8 @@ class UserRepositoryImplementation implements UserRepositoryInterface {
         $user = User::findOrFail($id);
 
         if ($user) {
-            // $user->deleted_by = auth()->id(); // Track who deleted the user
-            $user->save();
             $user->delete(); // soft delete
         }
-    
-        return response()->json(['message' => 'User soft deleted successfully']);
     }
 
     public function getDeletedUsers()
@@ -58,16 +54,12 @@ class UserRepositoryImplementation implements UserRepositoryInterface {
     {
         $user = User::withTrashed()->findOrFail($id);
         $user->restore();
-
-        return response()->json(['message' => 'Deleted user restored successfully']);
     }
 
     public function forceDelete($id)
     {
         $user = User::withTrashed()->findOrFail($id);
         $user->forceDelete();
-
-        return response()->json(['message' => 'User permanently deleted']);
     }
 
     public function changePassword($id, $hashedPassword)

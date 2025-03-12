@@ -10,10 +10,10 @@ class TweetService
 
     public function __construct()
     {
-        $consumer_key = env('TWITTER_CONSUMER_KEY');
-        $consumer_secret = env('TWITTER_CONSUMER_SECRET');
-        $access_token = env('TWITTER_ACCESS_TOKEN');
-        $access_secret = env('TWITTER_ACCESS_SECRET');
+        $consumer_key = env('TWITTER_CONSUMER_KEY', '');
+        $consumer_secret = env('TWITTER_CONSUMER_SECRET', '');
+        $access_token = env('TWITTER_ACCESS_TOKEN', '');
+        $access_secret = env('TWITTER_ACCESS_SECRET', '');
 
         $this->client = new TwitterOAuth($consumer_key, $consumer_secret, $access_token, $access_secret);
     }

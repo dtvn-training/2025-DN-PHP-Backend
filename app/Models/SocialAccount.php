@@ -11,7 +11,23 @@ class SocialAccount extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['user_id', 'social_user_id', 'screen_name', 'platform', 'access_token', 'refresh_token', 'expires_at'];
+    const USER_ID = "user_id";
+    const SOCIAL_USER_ID = "social_user_id";
+    const SCREEN_NAME = "screen_name";
+    const PLATFORM = "platform";
+    const ACCESS_TOKEN = "access_token";
+    const REFRESH_TOKEN = "refresh_token";
+    const EXPIRED_AT = "expires_at";
+
+    protected $fillable = [
+        self::USER_ID,
+        self::SOCIAL_USER_ID,
+        self::SCREEN_NAME,
+        self::PLATFORM,
+        self::ACCESS_TOKEN,
+        self::REFRESH_TOKEN,
+        self::EXPIRED_AT
+    ];
 
     protected static function boot()
     {

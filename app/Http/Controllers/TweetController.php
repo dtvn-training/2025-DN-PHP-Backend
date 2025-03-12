@@ -6,13 +6,13 @@ use App\Services\TweetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class TweetController extends Controller
+class TweetController extends ControllerWithGuard
 {
     private $tweetService;
 
     public function __construct(TweetService $tweetService)
     {
-        $this->middleware('auth:api');
+        parent::__construct(); 
         $this->tweetService = $tweetService;
     }
 

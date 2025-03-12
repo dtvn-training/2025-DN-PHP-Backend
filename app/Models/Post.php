@@ -11,7 +11,17 @@ class Post extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['user_id', 'content', 'media_urls', 'scheduled_time'];
+    const USER_ID = "user_id";
+    const CONTENT = "content";
+    const MEDIA_URLS = "media_urls";
+    const SCHEDULED_TIME = "scheduled_time";
+
+    protected $fillale = [
+        self::USER_ID,
+        self::CONTENT,
+        self::MEDIA_URLS,
+        self::SCHEDULED_TIME,
+    ];
 
     protected static function boot()
     {

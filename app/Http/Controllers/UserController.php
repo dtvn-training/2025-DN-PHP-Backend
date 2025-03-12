@@ -5,21 +5,24 @@ namespace App\Http\Controllers;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Traits\APIResponse;
 
-class UserController extends Controller
+class UserController extends ControllerWithGuard
 {
+    use APIResponse;
+
     private $userService;
 
     public function __construct(UserService $userService)
     {
-        $this->middleware('auth:api');
+        parent::__construct(); 
         $this->userService = $userService;
     }
 
     public function index()
     {
         $result = $this->userService->index();
-        return response()->json($result, 200);
+        return $this->responseSuccessWithData($result);
     }
 
     public function store(Request $request)
@@ -39,7 +42,7 @@ class UserController extends Controller
 
         $result = $this->userService->store($request->name, $request->email, $request->password);
 
-        return response()->json($result, 201);
+        return $this->responseSuccessWithData($result, true);
     }
 
     public function show($id)
@@ -50,37 +53,37 @@ class UserController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
 
-        return response()->json($user);
+        return $this->responseSuccessWithData($user);
     }
 
     public function update($id, Request $request)
     {
         $result = $this->userService->update($id, ['name'=>($request->name), 'email' => ($request->email), 'password'=> ($request->password)]);
-        return response()->json($result);
+        return $this->responseSuccessWithData($result);
     }
 
     public function destroy($id)
     {
-        $result = $this->userService->destroy($id);
-        return response()->json($result);
+        $this->userService->destroy($id);
+        return $this->responseSuccess('User soft deleted successfully!');
     }
 
     public function getDeletedUsers()
     {
         $result = $this->userService->getDeletedUsers();
-        return response()->json($result);
+        return $this->responseSuccessWithData($result);
     }
 
     public function restore($id)
     {
-        $result = $this->userService->restore($id);
-        return response()->json($result);
+        $this->userService->restore($id);
+        return $this->responseSuccess('Deleted user restored successfully!');
     }
 
     public function forceDelete($id)
     {
-        $result = $this->userService->forceDelete($id);
-        return response()->json($result);
+        $this->userService->forceDelete($id);
+        return $this->responseSuccess('User permanently deleted!');
     }
 
     public function changePassword($id, Request $request)
@@ -90,13 +93,12 @@ class UserController extends Controller
         ]);
 
         $result = $this->userService->changePassword($id, $request->password);
-
-        return response()->json($result);
+        return $this->responseSuccessWithData($result);
     }
 
     public function me(Request $request)
     {
         $result = $request->user();
-        return response()->json($result);
+        return $this->responseSuccessWithData($result);
     }
 }

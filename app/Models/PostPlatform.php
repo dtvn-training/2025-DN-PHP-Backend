@@ -10,7 +10,19 @@ class PostPlatform extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['post_id', 'social_account_id', 'platform', 'status', 'posted_at'];
+    const POST_ID = 'post_id';
+    const SOCIAL_ACCOUNT_ID = 'social_account_id';
+    const PLATFORM = 'platform';
+    const STATUS = 'platform';
+    const POST_AT = 'posted_at';
+
+    protected $fillable = [
+        self::POST_ID,
+        self::SOCIAL_ACCOUNT_ID,
+        self::PLATFORM,
+        self::STATUS,
+        self::POST_AT,
+    ];
 
     protected static function boot()
     {

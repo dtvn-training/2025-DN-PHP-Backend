@@ -17,7 +17,18 @@ class User extends Authenticatable implements JWTSubject
     use Notifiable;
     use SoftDeletes;
 
-    protected $fillable = ['email', 'full_name', 'password', 'role'];
+    const EMAIL = 'email';
+    const FULL_NAME = 'full_name';
+    const PASSWORD = 'password';
+    const ROLE = 'role';
+
+    protected $fillable = [
+        self::EMAIL,
+        self::FULL_NAME,
+        self::PASSWORD,
+        self::ROLE,
+    ];
+    
     protected $hidden = [
         'password'
     ];

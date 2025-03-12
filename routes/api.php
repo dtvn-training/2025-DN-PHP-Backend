@@ -25,22 +25,14 @@ Route::resource('users', UserController::class);
 Route::patch('users/{id}', [UserController::class, 'changePassword']);
 Route::get('deleted-users', [UserController::class, 'getDeletedUsers']);
 Route::put('deleted-users/{id}', [UserController::class, 'restore']);
-Route::get('me', [UserController::class, 'me']);
 
 # Tweets
 Route::resource('tweets', TweetController::class);
 Route::get('my-tweets', [TweetController::class, 'myTweets']);
 Route::get('tweets-interactions/{id}', [TweetController::class, 'tweetInteractions']);
 
-# Middleware
-Route::middleware(['auth:api'])->group(function () {
-    Route::resource('users', UserController::class);
-    Route::patch('users/{id}', [UserController::class, 'changePassword']);
-    Route::get('deleted-users', [UserController::class, 'getDeletedUsers']);
-    Route::put('deleted-users/{id}', [UserController::class, 'restore']);
-    Route::get('me', [UserController::class, 'me']);
+# Profile
+Route::get('profile/me', [UserController::class, 'me']);
+Route::get('profile/tweets', [TweetController::class, 'myTweets']);
 
-    Route::resource('tweets', TweetController::class);
-    Route::get('my-tweets', [TweetController::class, 'myTweets']);
-    Route::get('tweets-interactions/{id}', [TweetController::class, 'tweetInteractions']);
-});
+
