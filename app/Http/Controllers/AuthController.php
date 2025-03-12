@@ -3,14 +3,25 @@
 namespace App\Http\Controllers;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
+use App\Traits\APIResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Support\Facades\Validator;
+use App\Services\UserService;
 
 class AuthController extends Controller
 {
+    use APIResponse;
+    private $userService;
+
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
+    
     public function redirectToTwitter()
     {
         $twitter = new TwitterOAuth(
@@ -95,5 +106,30 @@ class AuthController extends Controller
         }
 
         return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    public function register(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|unique:users',
+            'password' => 'required|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = $this->userService->store($request->name, $request->email, $request->password);
+        $access_token = JWTAuth::fromUser($user);
+        $result = [
+            'user' => $user,
+            'access_token' => $access_token
+        ];
+
+        return $this->responseSuccessWithData($result, true);
     }
 }

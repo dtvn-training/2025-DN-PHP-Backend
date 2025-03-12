@@ -14,7 +14,7 @@ class UserRepositoryImplementation implements UserRepositoryInterface {
     public function create(array $data)
     {
         return User::create([
-            'name' => $data['name'],
+            'full_name' => $data['full_name'],
             'email' => $data['email'],
             'password' => $data['hashedPassword'],
         ]);
@@ -29,7 +29,7 @@ class UserRepositoryImplementation implements UserRepositoryInterface {
     {
         $user = User::findOrFail($id);
         $user->update([
-            'name' => $data['name'],
+            'full_name' => $data['full_name'],
             'email' => $data['email'],
             'password' => $data['hashedPassword'],
         ]);

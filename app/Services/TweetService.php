@@ -58,17 +58,6 @@ class TweetService
         ];
     }
 
-    public function update($id, string $message)
-    {
-        $deleteResult = $this->destroy($id);
-
-        if ($deleteResult['httpCode'] != 200) {
-            return $deleteResult;
-        }
-
-        return $this->store($message);
-    }
-
     public function show($id)
     {
         $response = $this->client->get("tweets/{$id}");

@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SocialAccount extends Model
 {
     use HasFactory, HasUuids;
+    use SoftDeletes;
 
     const USER_ID = "user_id";
     const SOCIAL_USER_ID = "social_user_id";
@@ -29,15 +30,9 @@ class SocialAccount extends Model
         self::EXPIRED_AT
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
-        static::creating(function ($model) {
-            if (!$model->id) {
-                $model->id = (string) Str::uuid(); // Generate UUID
-            }
-        });
-    }
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
 
     public function user()
     {

@@ -20,10 +20,10 @@ class UserService
         return $this->userRepository->getAll();
     }
 
-    public function store(String $name, String $email, String $password)
+    public function store(String $full_name, String $email, String $password)
     {
         return $this->userRepository->create([
-            'name' => $name,
+            'full_name' => $full_name,
             'email' => $email,
             'hashedPassword' => Hash::make($password),
         ]);
@@ -37,7 +37,7 @@ class UserService
     public function update($id, array $data)
     {
         return $this->userRepository->update($id, [
-            'name' => $data['name'],
+            'full_name' => $data['full_name'],
             'email' => $data['email'],
             'hashedPassword' => Hash::make( $data['password']),
         ]);

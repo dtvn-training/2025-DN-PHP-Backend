@@ -4,11 +4,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Interaction extends Model
 {
     use HasFactory, HasUuids;
+    use SoftDeletes;
 
     const POST_PLATFORM_ID = "post_platform_id";
     const NUMBER_OF_LIKES = "number_of_likes";
@@ -22,15 +23,9 @@ class Interaction extends Model
         self::NUMBER_OF_COMMENTS,
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
-        static::creating(function ($model) {
-            if (!$model->id) {
-                $model->id = (string) Str::uuid(); // Generate UUID
-            }
-        });
-    }
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
 
     public function postPlatform()
     {
