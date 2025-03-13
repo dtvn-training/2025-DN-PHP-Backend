@@ -8,6 +8,7 @@ use App\Http\Requests\UserUpdateRequest;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use App\Traits\APIResponse;
+use Illuminate\Support\Facades\Gate;
 
 class UserController extends ControllerWithGuard
 {
@@ -23,12 +24,14 @@ class UserController extends ControllerWithGuard
 
     public function index()
     {
+        Gate::authorize('manage-users');
         $result = $this->userService->index();
         return $this->responseSuccessWithData($result);
     }
 
     public function store(UserStoreRequest  $request)
     {
+        Gate::authorize('manage-users');
         $result = $this->userService->store($request->full_name, $request->email, $request->password);
         return $this->responseSuccessWithData($result, true);
     }
@@ -46,6 +49,8 @@ class UserController extends ControllerWithGuard
 
     public function update($id, UserUpdateRequest $request)
     {
+        Gate::authorize('manage-users');
+
         $user = $this->userService->show($id);
 
         if (!$user) {
@@ -68,6 +73,8 @@ class UserController extends ControllerWithGuard
      */
     public function destroy($id)
     {
+        Gate::authorize('manage-users');
+
         $user = $this->userService->show($id);
 
         if (!$user) {
@@ -96,6 +103,8 @@ class UserController extends ControllerWithGuard
      */
     public function restore($id)
     {
+        Gate::authorize('manage-users');
+
         $this->userService->restore($id);
         return $this->responseSuccess('Deleted user restored successfully!');
     }
@@ -104,10 +113,12 @@ class UserController extends ControllerWithGuard
      * Delete user permanently by their ID.
      *
      * @param int $id The ID of the user.
-     * @return \Illuminate\Http\JsonResponse A success response indicating the user has been delted permanently.
+     * @return \Illuminate\Http\JsonResponse A success response indicating the user has been deleted permanently.
      */
     public function forceDelete($id)
     {
+        Gate::authorize('manage-users');
+
         $user = $this->userService->show($id);
 
         if (!$user) {
