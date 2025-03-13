@@ -3,30 +3,36 @@
 namespace App\Http\Controllers;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
+use App\Http\Requests\UserStoreRequest;
+use App\Models\User;
+use App\Services\SocialAccountService;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use App\Traits\APIResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
-use Illuminate\Support\Facades\Validator;
 use App\Services\UserService;
 
 class AuthController extends Controller
 {
     use APIResponse;
     private $userService;
+    protected $socialAccountService;
 
-    public function __construct(UserService $userService)
+    public function __construct(SocialAccountService $socialAccountService, UserService $userService)
     {
+        $this->socialAccountService = $socialAccountService;
         $this->userService = $userService;
     }
-    
+
     public function redirectToTwitter()
     {
         $twitter = new TwitterOAuth(
-            env('TWITTER_CONSUMER_KEY'),
-            env('TWITTER_CONSUMER_SECRET')
+            env('TWITTER_CONSUMER_KEY', ''),
+            env('TWITTER_CONSUMER_SECRET', '')
         );
 
         // Request token from Twitter
@@ -37,6 +43,7 @@ class AuthController extends Controller
         // Store tokens in session
         Session::put('oauth_token', $request_token['oauth_token']);
         Session::put('oauth_token_secret', $request_token['oauth_token_secret']);
+        Session::put('auth_token', ''); // access token to laravel project (bearer token)
 
         // Redirect user to Twitter for authentication
         return redirect($twitter->url('oauth/authorize', [
@@ -46,41 +53,49 @@ class AuthController extends Controller
 
     public function handleTwitterCallback(Request $request)
     {
-        $oauth_token = Session::get('oauth_token');
-        $oauth_token_secret = Session::get('oauth_token_secret');
+        $oauth_token = session('oauth_token');
+        $oauth_token_secret = session(key: 'oauth_token_secret');
+        $auth_token = session('auth_token');
+
+        if (!$oauth_token || !$oauth_token_secret) {
+            return $this->responseError('Request token missing', 400);
+        }
+
+        if ($auth_token) {
+            try {
+                $decoded = JWT::decode($auth_token, new Key(env('JWT_SECRET'), 'HS256'));
+                $user = User::find($decoded->sub);
+
+                if ($user) {
+                    Auth::login($user);
+                }
+            } catch (\Exception $e) {
+                return $this->responseError('Invalid JWT Token', 401);
+            }
+        }
 
         $twitter = new TwitterOAuth(
-            env('TWITTER_CONSUMER_KEY'),
-            env('TWITTER_CONSUMER_SECRET'),
+            env('TWITTER_CONSUMER_KEY', ''),
+            env('TWITTER_CONSUMER_SECRET', ''),
             $oauth_token,
             $oauth_token_secret
         );
 
-        // Get access tokens
         $access_token = $twitter->oauth("oauth/access_token", [
             "oauth_verifier" => $request->oauth_verifier
         ]);
 
-        // Write data to CSV
-        $data = [
-            $access_token['screen_name'], // username
-            $access_token['user_id'],
-            $access_token['oauth_token'],
-            $access_token['oauth_token_secret']
-        ];
+        $user = auth()->user();
 
-        $filePath = storage_path('twitter_users.csv');
-        if (!file_exists($filePath)) {
-            $file = fopen($filePath, 'w');
-            fputcsv($file, ['Username', 'User ID', 'Access Token', 'Access Secret']);
-        } else {
-            $file = fopen($filePath, 'a');
+        if ($user) {
+            $socialAccount = $this->socialAccountService->store($user->getAuthIdentifier(), $access_token, 'TWITTER');
+            return $this->responseSuccessWithData([
+                'user' => $user,
+                'social_account' => $socialAccount
+            ]);
         }
 
-        fputcsv($file, $data);
-        fclose($file);
-
-        return redirect('/api/users')->with('success', 'Twitter linked successfully!');
+        return $this->responseError('User not authenticated', 401);
     }
 
     public function login(Request $request)
@@ -94,36 +109,21 @@ class AuthController extends Controller
             try {
                 $access_token = JWTAuth::fromUser($user);
 
-                return response()->json([
+                return $this->responseSuccessWithData([
                     'user' => $user,
                     'access_token' => $access_token
                 ]);
-            }
-
-            catch (JWTException $e) {
-                return response()->json(['error' => 'Could not create token'], 500);
+            } catch (JWTException $e) {
+                return $this->responseError('Could not create token', 500);
             }
         }
 
-        return response()->json(['message' => 'Unauthorized'], 401);
+        return $this->responseError('Unauthorized', 401);
     }
 
-    public function register(Request $request)
+    public function register(UserStoreRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users',
-            'password' => 'required|string|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $user = $this->userService->store($request->name, $request->email, $request->password);
+        $user = $this->userService->store($request->full_name, $request->email, $request->password);
         $access_token = JWTAuth::fromUser($user);
         $result = [
             'user' => $user,

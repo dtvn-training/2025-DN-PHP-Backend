@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 use Illuminate\Auth\AuthenticationException;
@@ -42,6 +43,10 @@ class Handler extends ExceptionHandler
         if ($request->expectsJson()) {
             if ($exception instanceof AuthenticationException) {
                 return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            if ($exception instanceof AuthorizationException) {
+                return response()->json(['error' => 'You are not allowed'], 401);
             }
 
             if ($exception instanceof TokenInvalidException) {

@@ -17,6 +17,7 @@ class SocialAccount extends Model
     const SCREEN_NAME = "screen_name";
     const PLATFORM = "platform";
     const ACCESS_TOKEN = "access_token";
+    const ACCESS_TOKEN_SECRET = "access_token_secret";
     const REFRESH_TOKEN = "refresh_token";
     const EXPIRED_AT = "expires_at";
 
@@ -26,6 +27,7 @@ class SocialAccount extends Model
         self::SCREEN_NAME,
         self::PLATFORM,
         self::ACCESS_TOKEN,
+        self::ACCESS_TOKEN_SECRET,
         self::REFRESH_TOKEN,
         self::EXPIRED_AT
     ];
