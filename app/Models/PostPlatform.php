@@ -31,11 +31,11 @@ class PostPlatform extends Model
 
     public function post()
     {
-        return $this->belongsTo(Post::class);
+        return $this->belongsTo(Post::class, self::POST_ID, 'id');
     }
 
     public function socialAccount()
     {
-        return $this->belongsTo(SocialAccount::class);
+        return $this->belongsTo(SocialAccount::class, self::SOCIAL_ACCOUNT_ID, 'id');
     }
 }
