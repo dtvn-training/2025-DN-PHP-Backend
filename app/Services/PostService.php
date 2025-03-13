@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Post;
 use App\Repositories\Post\PostRepositoryInterface;
-use Illuminate\Support\Facades\Hash;
 
 class PostService
 {
@@ -14,10 +14,32 @@ class PostService
         $this->postRepository = $postRepository;
     }
 
-
     public function index()
     {
         // 
+    }
+
+    public function getScheduledPosts()
+    {
+        return $this->postRepository->getScheduledPosts();
+    }
+
+    public function publish(Post $post)
+    {
+        $postPlatforms = $this->postRepository->getPostPlatforms($post);
+
+        foreach ($postPlatforms as $postPlatform) {
+            $socialAccount = $postPlatform->social_account;
+            $tweetService = new TweetService($socialAccount->access_token, $socialAccount->access_token_secret);
+
+            $result = $tweetService->store($post->content, $post->media_urls);
+
+            if ($result['httpCode'] == 200) {
+                $this->postRepository->updatePostPlatformStatus($postPlatform, 'SUCCESS');
+            } else {
+                $this->postRepository->updatePostPlatformStatus($postPlatform, 'FAILED');
+            }
+        }
     }
 
     public function store(array $data)
@@ -30,7 +52,8 @@ class PostService
         return $this->postRepository->getById($id);
     }
 
-    public function myPosts($userId) {
+    public function myPosts($userId)
+    {
         return $this->postRepository->getMyPosts($userId);
     }
 

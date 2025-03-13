@@ -7,21 +7,46 @@ use App\Models\PostPlatform;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class PostRepositoryImplementation implements PostRepositoryInterface
 {
     public function getAll()
     {
-       //
+        //
     }
 
-    public function getMyPosts($userId) {
+    public function getScheduledPosts()
+    {
+        $posts = Post::where('scheduled_time', '<=', Carbon::now())
+            ->whereDoesntHave('postPlatforms', function ($query) {
+                $query->where('status', 'SUCCESS');
+            })
+            ->get();
+        return $posts;
+    }
+
+    public function getPostPlatforms(Post $post)
+    {
+        return $post->postPlatforms;
+    }
+
+    public function updatePostPlatformStatus($postPlatform, $status)
+    {
+        $postPlatform->update([
+            'status' => $status,
+            'posted_at' => Carbon::now(),
+        ]);
+    }
+
+    public function getMyPosts($userId)
+    {
         $posts =  Post::where("user_id", $userId)->get();
 
         foreach ($posts as $post) {
             $post->postPlatforms = PostPlatform::where('post_id', $post->id)->get();
         }
-        
+
         return $posts;
     }
 
@@ -57,7 +82,7 @@ class PostRepositoryImplementation implements PostRepositoryInterface
                         'post_id' => $postId,
                         'platform' => $platform,
                         'social_account_id' => $socialAccount->id,
-                        'created_at'=> now(),
+                        'created_at' => now(),
                     ]);
                 }
             }
@@ -73,6 +98,9 @@ class PostRepositoryImplementation implements PostRepositoryInterface
     public function getById($id)
     {
         $post = Post::find($id);
+        if (!$post) {
+            return null;
+        }
         $post->postPlatforms = PostPlatform::where('post_id', $id)->get();
         return $post;
     }
@@ -113,7 +141,7 @@ class PostRepositoryImplementation implements PostRepositoryInterface
             }
 
             DB::commit();
-            return ['success' => true, 'message' => 'Post created successfully!'];
+            return ['success' => true, 'message' => 'Post updated successfully!'];
         } catch (Exception $e) {
             DB::rollBack();
             return ['success' => false, 'message' => $e->getMessage()];
