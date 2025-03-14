@@ -28,7 +28,7 @@ class PostRepositoryImplementation implements PostRepositoryInterface
 
     public function getPostPlatforms(Post $post)
     {
-        return $post->postPlatforms;
+        return PostPlatform::where('post_id', $post->id)->with('socialAccount')->get();
     }
 
     public function updatePostPlatformStatus($postPlatform, $status)

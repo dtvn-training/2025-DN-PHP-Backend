@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\RequestOptions;
 use Abraham\TwitterOAuth\TwitterOAuth;
 
 class TweetService
@@ -20,6 +22,9 @@ class TweetService
         $mediaIds = [];
 
         foreach ($mediaPaths as $path) {
+            // $uploadedMedia = $this->client->upload("media/upload", [
+            //     'media' => fopen($path, 'r')
+            // ]);
             $uploadedMedia = $this->client->upload("media/upload", ["media" => $path]);
             if (isset($uploadedMedia->media_id_string)) {
                 $mediaIds[] = $uploadedMedia->media_id_string;

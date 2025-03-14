@@ -43,7 +43,7 @@ class AuthController extends Controller
         // Store tokens in session
         Session::put('oauth_token', $request_token['oauth_token']);
         Session::put('oauth_token_secret', $request_token['oauth_token_secret']);
-        Session::put('auth_token', ''); // access token to laravel project (bearer token)
+        Session::put('auth_token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwMDAvbG9naW4iLCJpYXQiOjE3NDE5MjYzMzMsImV4cCI6MTc0MTkyOTkzMywibmJmIjoxNzQxOTI2MzMzLCJqdGkiOiJrMUlLd2xZeWdsdjBKTFI1Iiwic3ViIjoiOWU2OTRlMjUtZGZjZC00NTZmLTlmNjItM2EzZWFhZWRlZGJkIiwicHJ2IjoiMjNiZDVjODk0OWY2MDBhZGIzOWU3MDFjNDAwODcyZGI3YTU5NzZmNyIsImlkIjoiOWU2OTRlMjUtZGZjZC00NTZmLTlmNjItM2EzZWFhZWRlZGJkIiwiZW1haWwiOiJja3V0Y2hAZXhhbXBsZS5jb20iLCJmdWxsX25hbWUiOiJJc2FiZWxsIEdyYW50Iiwicm9sZSI6IlVTRVIifQ.qn3iG7m6weDC-j6u3kFvG_gXUIf0kgZ8QuuQXDfhrVo'); // access token to laravel project (bearer token)
 
         // Redirect user to Twitter for authentication
         return redirect($twitter->url('oauth/authorize', [
@@ -124,7 +124,7 @@ class AuthController extends Controller
     public function register(UserStoreRequest $request)
     {
         $user = $this->userService->store($request->full_name, $request->email, $request->password);
-        $access_token = JWTAuth::fromUser($user);
+        $access_token = JWTAuth::fromUser($user); // generate jwt from user data
         $result = [
             'user' => $user,
             'access_token' => $access_token
