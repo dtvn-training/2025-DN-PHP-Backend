@@ -11,11 +11,14 @@ class PostPlatform extends Model
     use HasFactory, HasUuids;
     use SoftDeletes;
 
+    const ID = 'id';
+
     const POST_ID = 'post_id';
     const SOCIAL_ACCOUNT_ID = 'social_account_id';
     const PLATFORM = 'platform';
     const STATUS = 'status';
     const POST_AT = 'posted_at';
+    const CREATED_AT = 'created_at';
 
     protected $fillable = [
         self::POST_ID,

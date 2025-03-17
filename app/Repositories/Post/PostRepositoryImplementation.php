@@ -4,6 +4,7 @@ namespace App\Repositories\Post;
 
 use App\Models\Post;
 use App\Models\PostPlatform;
+use App\Models\SocialAccount;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -58,41 +59,38 @@ class PostRepositoryImplementation implements PostRepositoryInterface
         $scheduledTime = $data["scheduled_time"];
         $listPlatforms = $data["list_platforms"];
 
-        DB::beginTransaction();
-        try {
-            $postId = Str::uuid();
-            DB::table('posts')->insert([
-                'id' => $postId,
-                'user_id' => $userId,
-                'content' => $content,
-                'media_urls' => json_encode($mediaUrls),
-                'scheduled_time' => $scheduledTime,
-                'created_at' => now(),
+        DB::transaction(function () use ($userId, $content, $mediaUrls, $scheduledTime, $listPlatforms) {
+            $post = Post::create([
+                Post::ID => Str::uuid(),
+                Post::USER_ID => $userId,
+                Post::CONTENT => $content,
+                Post::MEDIA_URLS => json_encode($mediaUrls),
+                Post::SCHEDULED_TIME => $scheduledTime
             ]);
-
+        
+            $postPlatformsData = [];
             foreach ($listPlatforms as $platform) {
-                $socialAccount = DB::table('social_accounts')
-                    ->where('user_id', $userId)
+                $socialAccount = SocialAccount::where('user_id', $userId)
                     ->where('platform', $platform)
                     ->first();
-
+        
                 if ($socialAccount) {
-                    DB::table('post_platforms')->insert([
-                        'id' => Str::uuid(),
-                        'post_id' => $postId,
-                        'platform' => $platform,
-                        'social_account_id' => $socialAccount->id,
-                        'created_at' => now(),
-                    ]);
+                    $postPlatformsData[] = [
+                        PostPlatform::ID => Str::uuid(),
+                        PostPlatform::POST_ID => $post->id,
+                        PostPlatform::PLATFORM => $platform,
+                        PostPlatform::SOCIAL_ACCOUNT_ID => $socialAccount->id,
+                        PostPlatform::CREATED_AT => now()
+                    ];
                 }
             }
 
-            DB::commit();
-            return ['success' => true, 'message' => 'Post created successfully!'];
-        } catch (Exception $e) {
-            DB::rollBack();
-            return ['success' => false, 'message' => $e->getMessage()];
-        }
+            if (!empty($postPlatformsData)) {
+                PostPlatform::insert($postPlatformsData);
+            }
+        });
+
+        return;
     }
 
     public function getById($id)
@@ -113,39 +111,40 @@ class PostRepositoryImplementation implements PostRepositoryInterface
         $scheduledTime = $data["scheduled_time"];
         $listPlatforms = $data["list_platforms"];
 
-        DB::beginTransaction();
-        try {
-            DB::table('posts')->where('id', $id)->update([
-                'user_id' => $userId,
-                'content' => $content,
-                'media_urls' => json_encode($mediaUrls),
-                'scheduled_time' => $scheduledTime,
+        DB::transaction(function () use ($id, $userId, $content, $mediaUrls, $scheduledTime, $listPlatforms) {
+            $post = Post::findOrFail($id);
+            $post->update([
+                Post::USER_ID => $userId,
+                Post::CONTENT => $content,
+                Post::MEDIA_URLS => json_encode($mediaUrls),
+                Post::SCHEDULED_TIME => $scheduledTime
             ]);
-
-            DB::table('post_platforms')->where('post_id', $id)->delete();
-
+        
+            PostPlatform::where('post_id', $id)->delete();
+        
+            $postPlatformsData = [];
             foreach ($listPlatforms as $platform) {
-                $socialAccount = DB::table('social_accounts')
-                    ->where('user_id', $userId)
+                $socialAccount = SocialAccount::where('user_id', $userId)
                     ->where('platform', $platform)
                     ->first();
-
+        
                 if ($socialAccount) {
-                    DB::table('post_platforms')->insert([
-                        'id' => Str::uuid(),
-                        'post_id' => $id,
-                        'platform' => $platform,
-                        'social_account_id' => $socialAccount->id
-                    ]);
+                    $postPlatformsData[] = [
+                        PostPlatform::ID => Str::uuid(),
+                        PostPlatform::POST_ID => $id,
+                        PostPlatform::PLATFORM => $platform,
+                        PostPlatform::SOCIAL_ACCOUNT_ID => $socialAccount->id,
+                        PostPlatform::CREATED_AT => now()
+                    ];
                 }
             }
+        
+            if (!empty($postPlatformsData)) {
+                PostPlatform::insert($postPlatformsData);
+            }
+        });
 
-            DB::commit();
-            return ['success' => true, 'message' => 'Post updated successfully!'];
-        } catch (Exception $e) {
-            DB::rollBack();
-            return ['success' => false, 'message' => $e->getMessage()];
-        }
+        return;
     }
 
     public function delete($id)

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Post;
 use App\Repositories\Post\PostRepositoryInterface;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response as HTTPStatus;
 
 class PostService
 {
@@ -39,10 +40,10 @@ class PostService
 
             $result = $tweetService->store($post->content, $post->media_urls);
 
-            if ($result['httpCode'] == 201) {
-                $this->postRepository->updatePostPlatformStatus($postPlatform, 'SUCCESS');
+            if ($result['httpCode'] == HTTPStatus::HTTP_CREATED) {
+                $this->postRepository->updatePostPlatformStatus($postPlatform, Post::STATUSES['SUCCESS']);
             } else {
-                $this->postRepository->updatePostPlatformStatus($postPlatform, 'FAILED');
+                $this->postRepository->updatePostPlatformStatus($postPlatform, Post::STATUSES['FAILED']);
                 Log::error('TweetService failed response:', [
                     'httpCode' => $result['httpCode'],
                     'response' => json_encode($result['response'], JSON_PRETTY_PRINT)

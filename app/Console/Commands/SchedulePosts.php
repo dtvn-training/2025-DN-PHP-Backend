@@ -21,7 +21,7 @@ class SchedulePosts extends Command
     protected $description = 'Publish scheduled posts to platforms';
 
     /**
-     * Execute the console command.
+     * The post service instance.
      */
     protected $postService;
 
