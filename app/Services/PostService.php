@@ -37,11 +37,12 @@ class PostService
             Log::info('Access Token Secret: ' . $socialAccount->access_token_secret);
 
             $tweetService = new TweetService($socialAccount->access_token, $socialAccount->access_token_secret);
-
-            $result = $tweetService->store($post->content, $post->media_urls);
+            $mediaUrls = json_decode($post->media_urls, true);
+            $result = $tweetService->store($post->content,  $mediaUrls);
 
             if ($result['httpCode'] == HTTPStatus::HTTP_CREATED) {
                 $this->postRepository->updatePostPlatformStatus($postPlatform, Post::STATUSES['SUCCESS']);
+                Log::info('Publish posts successfully');
             } else {
                 $this->postRepository->updatePostPlatformStatus($postPlatform, Post::STATUSES['FAILED']);
                 Log::error('TweetService failed response:', [

@@ -12,7 +12,6 @@ class PostPlatform extends Model
     use SoftDeletes;
 
     const ID = 'id';
-
     const POST_ID = 'post_id';
     const SOCIAL_ACCOUNT_ID = 'social_account_id';
     const PLATFORM = 'platform';
