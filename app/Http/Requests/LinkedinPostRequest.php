@@ -6,20 +6,20 @@ use App\Traits\APIResponse;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 
-class TweetUpdateRequest extends FormRequest
+class LinkedinPostRequest extends FormRequest
 {
     use APIResponse;
 
     public function authorize()
     {
-        return true; 
+        return true;
     }
 
     public function rules()
     {
         return [
-            'message' => 'required|string|max:280',
-            'mediaPaths' => 'nullable|array',
+            'message' => 'max:280',
+            'images' => 'nullable|array',
         ];
     }
 

@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('post_platforms', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('post_id');
+            $table->uuid('post_platform_id')->nullable();
             $table->uuid('social_account_id');
-            $table->enum('platform', ['TWITTER', 'FACEBOOK', 'REDDIT'])->default('TWITTER');
+            $table->enum('platform', ['TWITTER', 'LINKEDIN'])->default('TWITTER');
             $table->enum('status', ['PENDING', 'FAILED', 'SUCCESS'])->default('PENDING');
             $table->timestamp('posted_at')->nullable();
             $table->timestamps();

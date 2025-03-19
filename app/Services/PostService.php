@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Jobs\AsyncPost;
 use App\Models\Post;
 use App\Repositories\Post\PostRepositoryInterface;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response as HTTPStatus;
+use Illuminate\Support\Str;
 
 class PostService
 {
@@ -19,6 +22,11 @@ class PostService
     public function index()
     {
         // 
+    }
+
+    public function getAllSuccessPostPlatforms()
+    {
+        return $this->postRepository->getAllSuccessPostPlatforms();
     }
 
     public function getScheduledPosts()
@@ -36,16 +44,26 @@ class PostService
             Log::info('Access Token: ' . $socialAccount->access_token);
             Log::info('Access Token Secret: ' . $socialAccount->access_token_secret);
 
-            $tweetService = new TweetService($socialAccount->access_token, $socialAccount->access_token_secret);
-            $mediaUrls = json_decode($post->media_urls, true);
-            $result = $tweetService->store($post->content,  $mediaUrls);
+            $mediaUrls = $post->media_urls;
+            switch ($socialAccount->platform) {
+                case "LINKEDIN": {
+                        $linkedinService = new LinkedinService();
+                        $result = $linkedinService->postToLinkedin($post->content, $mediaUrls ?? [], $socialAccount->access_token);
+                        break;
+                    }
+                case "TWITTER": {
+                        $tweetService = new TweetService($socialAccount->access_token, $socialAccount->access_token_secret);
+                        $result = $tweetService->store($post->content, $mediaUrls ?? []);
+                        break;
+                    }
+            }
 
             if ($result['httpCode'] == HTTPStatus::HTTP_CREATED) {
-                $this->postRepository->updatePostPlatformStatus($postPlatform, Post::STATUSES['SUCCESS']);
+                $this->postRepository->updatePostPlatform($postPlatform, Post::STATUSES['SUCCESS'], $result['response']);
                 Log::info('Publish posts successfully');
             } else {
-                $this->postRepository->updatePostPlatformStatus($postPlatform, Post::STATUSES['FAILED']);
-                Log::error('TweetService failed response:', [
+                $this->postRepository->updatePostPlatform($postPlatform, Post::STATUSES['FAILED'], null);
+                Log::error('Publish failed response:', [
                     'httpCode' => $result['httpCode'],
                     'response' => json_encode($result['response'], JSON_PRETTY_PRINT)
                 ]);
@@ -55,7 +73,27 @@ class PostService
 
     public function store(array $data)
     {
-        return $this->postRepository->create($data);
+        if (!empty($data['media_urls'])) {
+            $data['media_urls'] = array_map(function ($media) {
+                return Cloudinary::upload($media->getRealPath(), ['folder' => 'smart_post'])
+                    ->getSecurePath();
+            }, $data['media_urls']);
+        }
+
+        if (isset($data["scheduled_time"])) {
+            $this->postRepository->create($data);
+        } else {
+            $post = Post::create([
+                Post::ID => Str::uuid(),
+                Post::USER_ID => $data["user_id"],
+                Post::CONTENT => $data["content"],
+                Post::MEDIA_URLS =>  $data['media_urls'],
+                Post::SCHEDULED_TIME =>  $data["scheduled_time"]
+            ]);
+            foreach ($data["list_platforms"] as $platform) {
+                AsyncPost::dispatch($post, $platform);
+            }
+        }
     }
 
     public function show($id)

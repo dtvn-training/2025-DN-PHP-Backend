@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('user_id');
             $table->string('social_user_id', 50)->nullable();
             $table->string('screen_name', 50)->nullable();
-            $table->enum('platform', ['TWITTER', 'FACEBOOK', 'REDDIT'])->default('TWITTER');
+            $table->enum('platform', ['TWITTER', 'LINKEDIN'])->default('TWITTER');
             $table->text('access_token');
             $table->text('access_token_secret')->nullable();
             $table->text('refresh_token')->nullable();
@@ -25,7 +25,7 @@ return new class extends Migration
 
             $table->softDeletes();
 
-            $table->unique(['user_id','platform']);
+            $table->unique(['user_id', 'platform']);
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });

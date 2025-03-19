@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Services\UserService;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
@@ -28,7 +29,7 @@ class AuthController extends Controller
         $this->userService = $userService;
     }
 
-    public function redirectToTwitter()
+    public function redirectToTwitter(Request $request)
     {
         $twitter = new TwitterOAuth(
             env('TWITTER_CONSUMER_KEY', ''),
@@ -43,7 +44,7 @@ class AuthController extends Controller
         // Store tokens in session
         Session::put('oauth_token', $request_token['oauth_token']);
         Session::put('oauth_token_secret', $request_token['oauth_token_secret']);
-        Session::put('auth_token', ''); // access token to laravel project (bearer token)
+        Session::put('auth_token', $request['access-token']); // access token to laravel project (bearer token)
 
         // Redirect user to Twitter for authentication
         return redirect($twitter->url('oauth/authorize', [
@@ -89,10 +90,12 @@ class AuthController extends Controller
 
         if ($user) {
             $socialAccount = $this->socialAccountService->store($user->getAuthIdentifier(), $access_token, 'TWITTER');
-            return $this->responseSuccessWithData([
-                'user' => $user,
-                'social_account' => $socialAccount
-            ]);
+            return "<script>
+                window.opener.postMessage({
+                    socialAccount: " . json_encode($socialAccount) . "
+                }, 'http://localhost:3000');
+                window.close(); 
+            </script>";
         }
 
         return $this->responseError('User not authenticated', 401);
@@ -131,5 +134,83 @@ class AuthController extends Controller
         ];
 
         return $this->responseSuccessWithData($result, true);
+    }
+
+    public function redirectToLinkedin(Request $request)
+    {
+        Session::put('auth_token', $request['access-token']);
+
+        $params = [
+            'response_type' => 'code',
+            'client_id' => env('LINKEDIN_CLIENT_ID'),
+            'redirect_uri' => env('LINKEDIN_REDIRECT_URI'),
+            'state' => 'random_string', // Dùng để bảo mật
+            'scope' => 'openid,profile,email,w_member_social' // Phạm vi quyền
+        ];
+
+        $query = http_build_query($params);
+
+        return redirect('https://www.linkedin.com/oauth/v2/authorization?' . $query);
+    }
+
+    public function handleLinkedinCallback(Request $request ) {
+        $code = $request->get('code');
+        $auth_token = session('auth_token');
+
+        if (!$code) {
+            return response()->json(['error' => 'Authorization code not received'], 400);
+        }
+
+        if ($auth_token) {
+            try {
+                $decoded = JWT::decode($auth_token, new Key(env('JWT_SECRET'), 'HS256'));
+                $user = User::find($decoded->sub);
+
+                if ($user) {
+                    Auth::login($user);
+                }
+            } catch (\Exception $e) {
+                return $this->responseError('Invalid JWT Token', 401);
+            }
+        }
+
+        $tokenResponse = Http::asForm()->post('https://www.linkedin.com/oauth/v2/accessToken', [
+            'grant_type' => 'authorization_code',
+            'code' => $code,
+            'redirect_uri' => env('LINKEDIN_REDIRECT_URI'),
+            'client_id' => env('LINKEDIN_CLIENT_ID'),
+            'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
+        ]);
+
+        // echo $tokenResponse;
+        if (!$tokenResponse->successful()) {
+            return response()->json(['error' => 'Failed to retrieve access token'], 400);
+        }
+
+        $accessToken = $tokenResponse->json()['access_token'];
+
+        $userProfileResponse = Http::withHeaders([
+            'Authorization' => "Bearer {$accessToken}",
+        ])->get('https://api.linkedin.com/v2/userinfo');
+        
+        $userData = $userProfileResponse->json();
+
+        $user = auth()->user();
+
+        if ($user) {
+            $socialAccount = $this->socialAccountService->store($user->getAuthIdentifier(), [
+                "user_id" => $userData["sub"],
+                "screen_name" => $userData["name"],
+                "oauth_token" => $accessToken,
+                "oauth_token_secret" => null
+            ], "LINKEDIN");
+            return "<script>
+                window.opener.postMessage({
+                    socialAccount: " . json_encode($socialAccount) . "
+                }, 'http://localhost:3000');
+                window.close(); 
+            </script>";
+        }
+        return $this->responseError('User not authenticated', 401);
     }
 }
