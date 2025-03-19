@@ -30,3 +30,8 @@ Route::get('/login/twitter/callback', [AuthController::class, 'handleTwitterCall
 # Auth
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+
+# Auth Linkedin
+
+Route::get('/login/linkedin', [AuthController::class, 'redirectToLinkedin'])->name('login.linkedin');
+Route::get('/login/linkedin/callback', [AuthController::class, 'handleLinkedinCallback'])->name('login.linkedin.callback');

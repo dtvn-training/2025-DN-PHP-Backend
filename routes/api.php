@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LinkedinController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SocialAccountController;
 use App\Http\Controllers\TweetController;
@@ -48,3 +49,5 @@ Route::get('social-accounts', [SocialAccountController::class, 'showByUserPlatfo
 Route::delete('social-accounts/{id}', [SocialAccountController::class, 'destroy']);
 Route::get('deleted-social-accounts', [SocialAccountController::class, 'getDeletedSocialAccounts']);
 Route::put('deleted-social-accounts/{id}', [SocialAccountController::class, 'restore']);
+
+Route::post('/linkedin/post', [LinkedinController::class, 'postToLinkedIn']);
