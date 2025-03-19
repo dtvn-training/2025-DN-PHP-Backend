@@ -19,7 +19,7 @@ class TweetUpdateRequest extends FormRequest
     {
         return [
             'message' => 'required|string|max:280',
-            'mediaPaths' => 'array',
+            'mediaPaths' => 'nullable|array',
         ];
     }
 

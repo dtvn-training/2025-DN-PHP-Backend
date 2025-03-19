@@ -2,21 +2,14 @@
 
 namespace App\Services;
 
-use App\Services\SocialAccountService;
-use App\Services\PostService;
 use Illuminate\Support\Facades\Http;
 use App\Traits\APIResponse;
 
 class LinkedinService
 {
-    private $socialAccountService;
-    private $postService;
     use APIResponse;
-    public function __construct()
-    {
-        // $this->socialAccountService = $socialAccountService;
-        // $this->postService = $postService;
-    }
+    public function __construct() {}
+    
     public function uploadMedias(string $userId, string $accessToken, array $images)
     {
         $assetIds = [];
@@ -41,7 +34,7 @@ class LinkedinService
                 $assetId = $uploadData['value']['asset'] ?? null;
 
                 if (!$assetId) {
-                    return response()->json(['error' => 'Failed to get asset ID'], 400);
+                    return $this->responseErrorWithData('Failed to get asset ID');
                 }
 
                 $uploadUrl = $uploadData['value']['uploadMechanism']['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']['uploadUrl'] ?? null;
@@ -96,7 +89,7 @@ class LinkedinService
             ->post("https://api.linkedin.com/v2/ugcPosts", $postPayload);
         $response = $postResponse->json();
 
-        if($postResponse->getStatusCode() == 201) {
+        if ($postResponse->getStatusCode() == 201) {
             return [
                 'httpCode' => $postResponse->getStatusCode(),
                 'response' =>  $response["id"]

@@ -12,14 +12,19 @@ use Carbon\Carbon;
 
 class PostRepositoryImplementation implements PostRepositoryInterface
 {
+    
+    const STATUS_SUCCESS = 'SUCCESS';
     public function getAll()
     {
         //
     }
+    public function getPostPlatformById($id) {
+        return PostPlatform::find($id);
+    }
 
-    public function getAllPostPlatforms()
+    public function getAllSuccessPostPlatforms()
     {
-        return PostPlatform::where('status', 'SUCCESS')->get();
+        return PostPlatform::where('status', self::STATUS_SUCCESS)->get();
     }
 
     public function getScheduledPosts()

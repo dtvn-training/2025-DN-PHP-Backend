@@ -19,7 +19,7 @@ class LinkedinPostRequest extends FormRequest
     {
         return [
             'message' => 'max:280',
-            'images' => 'array',
+            'images' => 'nullable|array',
         ];
     }
 

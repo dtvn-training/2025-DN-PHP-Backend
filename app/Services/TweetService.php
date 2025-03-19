@@ -42,11 +42,9 @@ class TweetService
         $response = $this->client->post("tweets", $parameters);
 
         Log::info('Publish response:', [
-            'httpCode' => $this->client->getLastHttpCode(),
-            // 'response' => $response->data->id
+            'httpCode' => $this->client->getLastHttpCode()
         ]);
-        // $res = json_encode($response, JSON_PRETTY_PRINT);
-        // var_dump($response);
+        
         if ($this->client->getLastHttpCode() == 201) {
             return [
                 'httpCode' => $this->client->getLastHttpCode(),
@@ -106,9 +104,8 @@ class TweetService
             'query' => "conversation_id:{$tweetId}"
         ]);
 
-        Log::info('Publish response:', [
-            'httpCode' => $this->client->getLastHttpCode(),
-            // 'response' => $response->data->id
+        Log::info('Get interaction response:', [
+            'httpCode' => $this->client->getLastHttpCode()
         ]);
 
         if ($this->client->getLastHttpCode() == 200) {

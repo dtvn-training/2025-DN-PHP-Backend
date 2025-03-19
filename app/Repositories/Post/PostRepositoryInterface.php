@@ -6,7 +6,8 @@ use App\Models\Post;
 use App\Repositories\Interfaces\BaseRepositoryInterface;
 
 interface PostRepositoryInterface extends BaseRepositoryInterface {
-    public function getAllPostPlatforms();
+    public function getPostPlatformById($id);
+    public function getAllSuccessPostPlatforms();
     public function getScheduledPosts();
     public function getPostPlatforms(Post $post);
     public function updatePostPlatform($postPlatform, $status);

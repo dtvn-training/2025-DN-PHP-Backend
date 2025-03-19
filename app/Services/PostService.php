@@ -24,8 +24,9 @@ class PostService
         // 
     }
 
-    public function getAllPostPlatforms() {
-        return $this->postRepository->getAllPostPlatforms();
+    public function getAllSuccessPostPlatforms()
+    {
+        return $this->postRepository->getAllSuccessPostPlatforms();
     }
 
     public function getScheduledPosts()
