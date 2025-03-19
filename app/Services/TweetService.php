@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
+use Illuminate\Support\Facades\Log;
 
 class TweetService
 {
     private $client;
 
-    public function __construct($access_token='', $access_secret='')
+    public function __construct($access_token = '', $access_secret = '')
     {
         $consumer_key = env('TWITTER_CONSUMER_KEY', '');
         $consumer_secret = env('TWITTER_CONSUMER_SECRET', '');
@@ -28,22 +29,35 @@ class TweetService
 
         return $mediaIds;
     }
-    
+
     public function store(string $message, array $mediaPaths = [])
     {
-        $mediaIds = $this->uploadMedias($mediaPaths);
+        // $mediaIds = $this->uploadMedias($mediaPaths);
 
         $parameters = ["text" => $message];
-        if (!empty($mediaIds)) {
-            $parameters["media"] = ["media_ids" => $mediaIds];
-        }
+        // if (!empty($mediaIds)) {
+        //     $parameters["media"] = ["media_ids" => $mediaIds];
+        // }
 
         $response = $this->client->post("tweets", $parameters);
 
-        return [
+        Log::info('Publish response:', [
             'httpCode' => $this->client->getLastHttpCode(),
-            'response' => $response
-        ];
+            // 'response' => $response->data->id
+        ]);
+        // $res = json_encode($response, JSON_PRETTY_PRINT);
+        // var_dump($response);
+        if ($this->client->getLastHttpCode() == 201) {
+            return [
+                'httpCode' => $this->client->getLastHttpCode(),
+                'response' => $response->data->id
+            ];
+        } else {
+            return [
+                'httpCode' => $this->client->getLastHttpCode(),
+                'response' =>  null
+            ];
+        }
     }
 
     public function destroy($id)
@@ -92,13 +106,19 @@ class TweetService
             'query' => "conversation_id:{$tweetId}"
         ]);
 
-        return [
+        Log::info('Publish response:', [
             'httpCode' => $this->client->getLastHttpCode(),
-            'response' => [
-                "likes" => $likes,
-                "retweets" => $retweets,
-                "replies" => $replies
-            ]
-        ];
+            // 'response' => $response->data->id
+        ]);
+
+        if ($this->client->getLastHttpCode() == 200) {
+            return [
+                "likes" => $likes->meta->result_count,
+                "shares" => $retweets->meta->result_count,
+                "comments" => $replies->meta->result_count
+            ];
+        } else {
+            return null;
+        }
     }
 }

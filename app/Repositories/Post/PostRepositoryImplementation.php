@@ -17,6 +17,11 @@ class PostRepositoryImplementation implements PostRepositoryInterface
         //
     }
 
+    public function getAllPostPlatforms()
+    {
+        return PostPlatform::where('status', 'SUCCESS')->get();
+    }
+
     public function getScheduledPosts()
     {
         $posts = Post::where('scheduled_time', '<=', Carbon::now())
@@ -32,9 +37,10 @@ class PostRepositoryImplementation implements PostRepositoryInterface
         return PostPlatform::where('post_id', $post->id)->with('socialAccount')->get();
     }
 
-    public function updatePostPlatformStatus($postPlatform, $status)
+    public function updatePostPlatform($postPlatform, $status, $postPlatformId = null)
     {
         $postPlatform->update([
+            'post_platform_id' => $postPlatformId,
             'status' => $status,
             'posted_at' => Carbon::now(),
         ]);
@@ -42,7 +48,7 @@ class PostRepositoryImplementation implements PostRepositoryInterface
 
     public function getMyPosts($userId)
     {
-        $posts =  Post::where("user_id", $userId)->get();
+        $posts =  Post::where("user_id", $userId)->orderBy('created_at', 'desc')->get();
 
         foreach ($posts as $post) {
             $post->postPlatforms = PostPlatform::where('post_id', $post->id)->get();
@@ -64,16 +70,16 @@ class PostRepositoryImplementation implements PostRepositoryInterface
                 Post::ID => Str::uuid(),
                 Post::USER_ID => $userId,
                 Post::CONTENT => $content,
-                Post::MEDIA_URLS => json_encode($mediaUrls),
+                Post::MEDIA_URLS => $mediaUrls,
                 Post::SCHEDULED_TIME => $scheduledTime
             ]);
-        
+
             $postPlatformsData = [];
             foreach ($listPlatforms as $platform) {
                 $socialAccount = SocialAccount::where('user_id', $userId)
                     ->where('platform', $platform)
                     ->first();
-        
+
                 if ($socialAccount) {
                     $postPlatformsData[] = [
                         PostPlatform::ID => Str::uuid(),
@@ -116,18 +122,18 @@ class PostRepositoryImplementation implements PostRepositoryInterface
             $post->update([
                 Post::USER_ID => $userId,
                 Post::CONTENT => $content,
-                Post::MEDIA_URLS => json_encode($mediaUrls),
+                Post::MEDIA_URLS => $mediaUrls,
                 Post::SCHEDULED_TIME => $scheduledTime
             ]);
-        
+
             PostPlatform::where('post_id', $id)->delete();
-        
+
             $postPlatformsData = [];
             foreach ($listPlatforms as $platform) {
                 $socialAccount = SocialAccount::where('user_id', $userId)
                     ->where('platform', $platform)
                     ->first();
-        
+
                 if ($socialAccount) {
                     $postPlatformsData[] = [
                         PostPlatform::ID => Str::uuid(),
@@ -138,7 +144,7 @@ class PostRepositoryImplementation implements PostRepositoryInterface
                     ];
                 }
             }
-        
+
             if (!empty($postPlatformsData)) {
                 PostPlatform::insert($postPlatformsData);
             }
