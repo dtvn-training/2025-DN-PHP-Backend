@@ -7,6 +7,7 @@ use App\Models\SocialAccount;
 use App\Services\TweetService;
 use App\Traits\APIResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class TweetController extends ControllerWithGuard
@@ -52,6 +53,7 @@ class TweetController extends ControllerWithGuard
     public function tweetInteractions($id, Request $request)
     {
         $account = SocialAccount::where("user_id", $request->user()->id)->where("platform", "TWITTER")->first();
+        Log::info('Account', $account->toArray());
         $tweetService = new TweetService($account->access_token, $account->access_token_secret);
         $result = $tweetService->tweetInteractions($id);
         return $this->responseSuccessWithData($result);

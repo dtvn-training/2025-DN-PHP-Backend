@@ -21,9 +21,27 @@ class TweetService
         $mediaIds = [];
 
         foreach ($mediaPaths as $path) {
+            if (filter_var($path, FILTER_VALIDATE_URL)) {
+                $fileContent = file_get_contents($path);
+                if ($fileContent === false) {
+                    continue; // Bỏ qua nếu tải không thành công
+                }
+                $tempPath = tempnam(sys_get_temp_dir(), 'twitter_media_');
+                file_put_contents($tempPath, $fileContent);
+                $path = $tempPath; // Cập nhật đường dẫn thành file cục bộ
+            }
+    
+            // Upload file lên Twitter
             $uploadedMedia = $this->client->upload("media/upload", ["media" => $path]);
+    
+            // Nếu upload thành công, lưu media_id
             if (isset($uploadedMedia->media_id_string)) {
                 $mediaIds[] = $uploadedMedia->media_id_string;
+            }
+    
+            // Xóa file tạm
+            if (isset($tempPath) && file_exists($tempPath)) {
+                unlink($tempPath);
             }
         }
 
@@ -32,19 +50,21 @@ class TweetService
 
     public function store(string $message, array $mediaPaths = [])
     {
-        // $mediaIds = $this->uploadMedias($mediaPaths);
+        $mediaIds = $this->uploadMedias($mediaPaths);
 
+        Log::info('Media ids', $mediaIds);
+        
         $parameters = ["text" => $message];
-        // if (!empty($mediaIds)) {
-        //     $parameters["media"] = ["media_ids" => $mediaIds];
-        // }
+        if (!empty($mediaIds)) {
+            $parameters["media"] = ["media_ids" => $mediaIds];
+        }
 
         $response = $this->client->post("tweets", $parameters);
 
         Log::info('Publish response:', [
             'httpCode' => $this->client->getLastHttpCode()
         ]);
-        
+
         if ($this->client->getLastHttpCode() == 201) {
             return [
                 'httpCode' => $this->client->getLastHttpCode(),
@@ -98,21 +118,17 @@ class TweetService
 
     public function tweetInteractions($tweetId)
     {
-        $likes = $this->client->get("tweets/{$tweetId}/liking_users");
-        $retweets = $this->client->get("tweets/{$tweetId}/retweeted_by");
-        $replies = $this->client->get("tweets/search/recent", [
-            'query' => "conversation_id:{$tweetId}"
+        $response = $this->client->get("tweets/{$tweetId}", [
+            "tweet.fields" => "public_metrics"
         ]);
-
         Log::info('Get interaction response:', [
             'httpCode' => $this->client->getLastHttpCode()
         ]);
-
         if ($this->client->getLastHttpCode() == 200) {
             return [
-                "likes" => $likes->meta->result_count,
-                "shares" => $retweets->meta->result_count,
-                "comments" => $replies->meta->result_count
+                "number_of_likes" => $response->data->public_metrics->like_count,
+                "number_of_shares" => $response->data->public_metrics->retweet_count,
+                "number_of_comments" => $response->data->public_metrics->reply_count
             ];
         } else {
             return null;
