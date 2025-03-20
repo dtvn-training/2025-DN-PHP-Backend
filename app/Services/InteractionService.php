@@ -46,16 +46,14 @@ class InteractionService
             foreach ($post->postPlatforms as $postPlatform) {
                 switch ($postPlatform->platform) {
                     case 'TWITTER': {
-                            $socialAccount = $postPlatform->socialAccount;
-                            $tweetService = new TweetService($socialAccount->access_token, $socialAccount->access_token_secret);
-                            $data = $tweetService->tweetInteractions($postPlatform->post_platform_id);
-                            if ($data != null) {
+                            $tweetService = new TweetService($postPlatform->socialAccount->access_token, $postPlatform->socialAccount->access_token_secret);
+                            $data = $tweetService->tweetInteractions($postPlatform->post_platform_id) ?? $this->interactionRepository->getInteractionsPostPlatformToday($postPlatform->id);
+                            if ($data) {
                                 $result[] = [
                                     "id" => $postPlatform->id,
                                     "platform" => $postPlatform->platform,
                                     "interactions" => $data
                                 ];
-
                                 $this->interactionRepository->createOrUpdateInteraction($postPlatform->id, $data);
                             }
                             break;
