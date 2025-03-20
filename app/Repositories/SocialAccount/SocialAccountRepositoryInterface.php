@@ -2,9 +2,6 @@
 
 namespace App\Repositories\SocialAccount;
 
-use App\Repositories\Interfaces\BaseRepositoryInterface;
-
-
 interface SocialAccountRepositoryInterface {
     public function createOrUpdate($user_id, $access_token, $platform);
     public function getById($id);

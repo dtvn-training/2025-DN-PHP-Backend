@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ContentController;
 use App\Http\Controllers\InteractionController;
 use App\Http\Controllers\LinkedinController;
 use App\Http\Controllers\PostController;
@@ -51,6 +52,11 @@ Route::delete('social-accounts/{id}', [SocialAccountController::class, 'destroy'
 Route::get('deleted-social-accounts', [SocialAccountController::class, 'getDeletedSocialAccounts']);
 Route::put('deleted-social-accounts/{id}', [SocialAccountController::class, 'restore']);
 
+# Interactions
+Route::get('interactions/{postPlatformId}', [InteractionController::class, 'getInteractionsByPostPlatformId']);
+
+# Content
+Route::post('contents', [ContentController::class, 'enhanceContent']);
 Route::post('/linkedin/post', [LinkedinController::class, 'postToLinkedIn']);
 
 Route::get('/interactions/post-platform/{id}', [InteractionController::class, 'getInteractionPostPlatform']);

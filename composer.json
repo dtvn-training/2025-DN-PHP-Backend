@@ -9,11 +9,16 @@
         "abraham/twitteroauth": "^7.0",
         "cloudinary-labs/cloudinary-laravel": "^2.3",
         "darkaonline/l5-swagger": "^8.6",
-        "guzzlehttp/guzzle": "^7.2",
+        "deepseek-php/deepseek-php-client": "^2.0",
+        "gemini-api-php/client": "^1.7",
+        "google-gemini-php/client": "^1.0",
+        "grok-php/client": "^1.1",
+        "guzzlehttp/guzzle": "^7.9",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/socialite": "^5.18",
         "laravel/tinker": "^2.8",
+        "openai-php/client": "^0.10.3",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {

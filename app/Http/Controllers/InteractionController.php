@@ -4,9 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Services\InteractionService;
 use App\Traits\APIResponse;
-use Illuminate\Http\Request;
-
-use function PHPUnit\Framework\isEmpty;
 
 class InteractionController extends ControllerWithGuard
 {
@@ -25,7 +22,6 @@ class InteractionController extends ControllerWithGuard
 
     public function getInteractionsPost($id) {
         $result = $this->interactionService->getInteractionsPost($id);
-        if(empty($result)) return $this->responseErrorWithData("No data interactions");
         return $this->responseSuccessWithData($result);
     }
 }
